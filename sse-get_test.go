@@ -32,7 +32,7 @@ func TestEncryptedGet(t *testing.T) {
 	if err := s3.Parse(); err != nil {
 		t.Fatal(err)
 	}
-	testEncryptedGet("test-encrypted-get", 5*1024*1024, t)
+	testEncryptedGet(s3.BucketName("test-encrypted-get"), 5*1024*1024, t)
 }
 
 func TestEncryptedMultipartGet(t *testing.T) {
@@ -42,7 +42,7 @@ func TestEncryptedMultipartGet(t *testing.T) {
 	if testing.Short() {
 		t.Skip("Skipping test because of -short flag")
 	}
-	testEncryptedGet("test-encrypted-get", 69*1024*1024, t)
+	testEncryptedGet(s3.BucketName("test-encrypted-multipart-get"), 69*1024*1024, t)
 }
 
 var encryptedRangeGetTests = []struct {
@@ -70,7 +70,7 @@ func TestEncryptedRangeGet(t *testing.T) {
 		TLSClientConfig: &tls.Config{InsecureSkipVerify: s3.Insecure},
 	})
 
-	const bucket = "test-encrypted-range-get"
+	bucket := s3.BucketName("test-encrypted-range-get")
 	if remove, err := s3.MakeBucket(bucket, client.BucketExists, client.MakeBucket, client.RemoveBucket); err != nil {
 		t.Fatalf("Failed to create bucket '%s': %s", bucket, err)
 	} else {

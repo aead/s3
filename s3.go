@@ -5,6 +5,8 @@
 package s3
 
 import (
+	"crypto/rand"
+	"encoding/hex"
 	"errors"
 	"flag"
 	"os"
@@ -34,7 +36,10 @@ var (
 	Insecure bool
 )
 
-var parsed = false
+var (
+	parsed   = false
+	parseErr error
+)
 
 // Parse parses the command line arguments.
 // It returns an error if no server, access-key
@@ -51,24 +56,34 @@ func Parse() error {
 		if Endpoint == "" {
 			Endpoint, ok = os.LookupEnv("SERVER_ENDPOINT")
 			if !ok {
-				return errors.New("No server endpoint is provided and also no SERVER_ENDPOINT env. variable is exported")
+				parseErr = errors.New("No server endpoint is provided and also no SERVER_ENDPOINT env. variable is exported")
+				return parseErr
 			}
 		}
 		if AccessKey == "" {
 			AccessKey, ok = os.LookupEnv("ACCESS_KEY")
 			if !ok {
-				return errors.New("No access key is provided and also no ACCESS_KEY env. variable is exported")
+				parseErr = errors.New("No access key is provided and also no ACCESS_KEY env. variable is exported")
+				return parseErr
 			}
 		}
 		if SecretKey == "" {
 			SecretKey, ok = os.LookupEnv("SECRET_KEY")
 			if !ok {
-				return errors.New("No secret key is provided and also no SECRET_KEY env. variable is exported")
-
+				parseErr = errors.New("No secret key is provided and also no SECRET_KEY env. variable is exported")
+				return parseErr
 			}
 		}
 	}
-	return nil
+	return parseErr
+}
+
+// BucketName returns a bucket name with the given
+// prefix and a random hex suffix.
+func BucketName(prefix string) string {
+	var random [4]byte
+	rand.Read(random[:])
+	return prefix + "-" + hex.EncodeToString(random[:])
 }
 
 // MakeBucket checks whether the bucket exists, if not creates it

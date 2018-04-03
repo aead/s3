@@ -29,7 +29,7 @@ func TestCustomerEncryptedCopy(t *testing.T) {
 	client.SetCustomTransport(&http.Transport{
 		TLSClientConfig: &tls.Config{InsecureSkipVerify: s3.Insecure},
 	})
-	const bucket = "test-customer-encrypted-copy"
+	bucket := s3.BucketName("test-customer-encrypted-copy")
 	if remove, err := s3.MakeBucket(bucket, client.BucketExists, client.MakeBucket, client.RemoveBucket); err != nil {
 		t.Fatalf("Failed to create bucket '%s': %s", bucket, err)
 	} else {
@@ -115,7 +115,7 @@ func TestCustomerKeyRotation(t *testing.T) {
 	client.SetCustomTransport(&http.Transport{
 		TLSClientConfig: &tls.Config{InsecureSkipVerify: s3.Insecure},
 	})
-	const bucket = "test-customer-key-rotation"
+	bucket := s3.BucketName("test-customer-key-rotation")
 	if remove, err := s3.MakeBucket(bucket, client.BucketExists, client.MakeBucket, client.RemoveBucket); err != nil {
 		t.Fatalf("Failed to create bucket '%s': %s", bucket, err)
 	} else {

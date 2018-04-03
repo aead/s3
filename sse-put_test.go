@@ -33,7 +33,7 @@ func TestEncryptedPut(t *testing.T) {
 	if err := s3.Parse(); err != nil {
 		t.Fatal(err)
 	}
-	testEncryptedPut("test-encrypted-put", 5*1024*1024, t)
+	testEncryptedPut(s3.BucketName("test-encrypted-put"), 5*1024*1024, t)
 }
 
 func TestEncryptedMultipartPut(t *testing.T) {
@@ -43,7 +43,7 @@ func TestEncryptedMultipartPut(t *testing.T) {
 	if testing.Short() {
 		t.Skip("Skipping test because of -short flag")
 	}
-	testEncryptedPut("test-encrypted-multipart-put", 69*1024*1024, t)
+	testEncryptedPut(s3.BucketName("test-encrypted-multipart-put"), 69*1024*1024, t)
 }
 
 func testEncryptedPut(bucket string, size int, t *testing.T) {
@@ -103,7 +103,7 @@ func TestEncryptedObjectEtag(t *testing.T) {
 		TLSClientConfig: &tls.Config{InsecureSkipVerify: s3.Insecure},
 	})
 
-	const bucket = "test-encrypted-object-etag"
+	bucket := s3.BucketName("test-encrypted-object-etag")
 	if remove, err := s3.MakeBucket(bucket, client.BucketExists, client.MakeBucket, client.RemoveBucket); err != nil {
 		t.Fatalf("Failed to create bucket '%s': %s", bucket, err)
 	} else {
