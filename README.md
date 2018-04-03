@@ -1,5 +1,6 @@
 [![Godoc Reference](https://godoc.org/github.com/aead/s3?status.svg)](https://godoc.org/github.com/aead/s3)
 [![Build Status](https://travis-ci.org/aead/s3.svg?branch=master)](https://travis-ci.org/aead/s3)
+[![Go Report Card](https://goreportcard.com/badge/aead/s3)](https://goreportcard.com/report/aead/s3)
 
 ## AWS S3 unit testing library
 
