@@ -11,6 +11,8 @@ import (
 	"flag"
 	"os"
 	"testing"
+
+	"github.com/minio/minio-go"
 )
 
 func init() {
@@ -106,6 +108,28 @@ func MakeBucket(bucket string, exists func(string) (bool, error), make func(stri
 	default:
 		return func(testing.TB) {}, nil
 	}
+}
+
+// ErrorCode returns the response code as string if
+// the err is a minio.ErrorResponse. It returns
+// a boolean flag indicating whether the provided error
+// is a minio.ErrorResponse.
+func ErrorCode(err error) (string, bool) {
+	if errResp, ok := err.(minio.ErrorResponse); ok {
+		return errResp.Code, ok
+	}
+	return "", false
+}
+
+// ErrorMessage returns the response message as string if
+// the err is a minio.ErrorResponse. It returns
+// a boolean flag indicating whether the provided error
+// is a minio.ErrorResponse.
+func ErrorMessage(err error) (string, bool) {
+	if errResp, ok := err.(minio.ErrorResponse); ok {
+		return errResp.Message, ok
+	}
+	return "", false
 }
 
 // RemoveObject removes the object at the bucket using the remove function.

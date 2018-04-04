@@ -84,15 +84,16 @@ func TestCustomerEncryptedCopy(t *testing.T) {
 
 var customerKeyRotationTests = []struct { // Tests are order-depended!
 	Old, New   encrypt.ServerSide
-	shouldFail bool
+	ShouldFail bool
+	ErrMessage string
 }{
-	{Old: encrypt.DefaultPBKDF([]byte("my-passowrd"), []byte("my-salt")), New: mustNewSSEC(make([]byte, 32)), shouldFail: false}, // 0
-	{Old: mustNewSSEC(make([]byte, 32)), New: mustNewSSEC(make([]byte, 32)), shouldFail: false},                                  // 1 // Equal keys
-	{Old: mustNewSSEC(make([]byte, 32)), New: nil, shouldFail: false},                                                            // 2 // Server-Side decrypt
-	{Old: nil, New: mustNewSSEC([]byte("32-byte SSE-C secret encryption.")), shouldFail: false},                                  // 3 // Server-Side encrypt
-	{Old: nil, New: mustNewSSEC(make([]byte, 32)), shouldFail: true},                                                             // 4 // Wrong source key
-	{Old: nil, New: nil, shouldFail: true},                                                                                       // 5 // Wrong source key- but src key == dst key == nil
-	{Old: mustNewSSEC(make([]byte, 32)), New: mustNewSSEC(make([]byte, 32)), shouldFail: true},                                   // 6 // Wrong source key- but src key == dst key != nil See: https://github.com/minio/minio/issues/5625
+	{Old: encrypt.DefaultPBKDF([]byte("my-passowrd"), []byte("my-salt")), New: mustNewSSEC(make([]byte, 32)), ShouldFail: false, ErrMessage: ""},                                                                 // 0
+	{Old: mustNewSSEC(make([]byte, 32)), New: mustNewSSEC(make([]byte, 32)), ShouldFail: false, ErrMessage: ""},                                                                                                  // 1 Equal keys
+	{Old: mustNewSSEC(make([]byte, 32)), New: nil, ShouldFail: false, ErrMessage: ""},                                                                                                                            // 2 Server-Side decrypt
+	{Old: nil, New: mustNewSSEC([]byte("32-byte SSE-C secret encryption.")), ShouldFail: false, ErrMessage: ""},                                                                                                  // 3 Server-Side encrypt
+	{Old: nil, New: mustNewSSEC(make([]byte, 32)), ShouldFail: true, ErrMessage: "The object was stored using a form of Server Side Encryption. The correct parameters must be provided to retrieve the object"}, // 4 Wrong source key
+	{Old: nil, New: nil, ShouldFail: true, ErrMessage: "The object was stored using a form of Server Side Encryption. The correct parameters must be provided to retrieve the object"},                           // 5 Wrong source key- but src key == dst key == nil
+	//{Old: mustNewSSEC(make([]byte, 32)), New: mustNewSSEC(make([]byte, 32)), ShouldFail: true, ErrMessage: ""},                                                                                                 // 6 Wrong source key- but src key == dst key != nil See: https://github.com/minio/minio/issues/5625
 }
 
 func mustNewSSEC(key []byte) encrypt.ServerSide {
@@ -139,13 +140,19 @@ func TestCustomerKeyRotation(t *testing.T) {
 			t.Fatalf("Test %d: Failed to create destination: %s", i, err)
 		}
 		switch err = client.CopyObject(dst, src); {
-		case err != nil && !test.shouldFail:
+		case err != nil && test.ShouldFail:
+			if want, ok := s3.ErrorMessage(err); ok {
+				if want != test.ErrMessage {
+					t.Errorf("Test %d: Should fail because of: '%s' but failed because of: '%s'", i, test.ErrMessage, want)
+				}
+			}
+		case err != nil && !test.ShouldFail:
 			t.Fatalf("Test %d: Failed to copy object from %s/%s to %s/%s: %s", i, bucket, object, bucket, object, err)
-		case err == nil && test.shouldFail:
+		case err == nil && test.ShouldFail:
 			t.Fatalf("Test %d: test should fail but passed successfully", i)
 		}
 
-		if !test.shouldFail {
+		if !test.ShouldFail {
 			stream, err := client.GetObject(bucket, object, minio.GetObjectOptions{ServerSideEncryption: test.New})
 			if err != nil {
 				t.Fatalf("Failed to open connection to '%s/%s/%s: %s", s3.Endpoint, bucket, object, err)
