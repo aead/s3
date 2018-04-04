@@ -45,7 +45,7 @@ func TestEncryptedPut(t *testing.T) {
 		TLSClientConfig: &tls.Config{InsecureSkipVerify: s3.Insecure},
 	})
 
-	const bucket = "test-encrypted-put"
+	bucket := s3.BucketName("test-encrypted-put")
 	if remove, err := s3.MakeBucket(bucket, client.BucketExists, client.MakeBucket, client.RemoveBucket); err != nil {
 		t.Fatalf("Failed to create bucket '%s': %s", bucket, err)
 	} else {
