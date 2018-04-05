@@ -31,7 +31,7 @@ func TestEncryptedGet(t *testing.T) {
 	if err := s3.Parse(); err != nil {
 		t.Fatal(err)
 	}
-	testEncryptedGet(s3.BucketName("test-encrypted-get"), 5*1024*1024, t)
+	testEncryptedGet(s3.BucketName("test-encrypted-get"), s3.Size, t)
 }
 
 func TestEncryptedMultipartGet(t *testing.T) {
@@ -41,20 +41,18 @@ func TestEncryptedMultipartGet(t *testing.T) {
 	if testing.Short() {
 		t.Skip("Skipping test because of -short flag")
 	}
-	testEncryptedGet(s3.BucketName("test-encrypted-multipart-get"), 69*1024*1024, t)
+	testEncryptedGet(s3.BucketName("test-encrypted-multipart-get"), s3.MultipartSize, t)
 }
 
 var encryptedRangeGetTests = []struct {
 	Start, End int64
 }{
-	{Start: 0, End: 5 * 1024 * 1024},  // 0
-	{Start: 0, End: -1 * 1024 * 1024}, // 1
-	{Start: 1 * 1024 * 1024, End: 0},  // 2
-	{Start: 0, End: 0},                // 3
-	{Start: 0, End: 32 * 1024},        // 4
-	{Start: 17564, End: 65 * 1024},    // 5
-	{Start: 684937, End: 0},           // 6
-	{Start: 88579, End: 88580},        // 7
+	{Start: 0, End: s3.Size},     // 0
+	{Start: 0, End: -s3.Size},    // 1
+	{Start: s3.Size - 1, End: 0}, // 2
+	{Start: 0, End: 0},           // 3
+	{Start: 1, End: s3.Size},     // 4
+	{Start: 2, End: 0},           // 5
 }
 
 func TestEncryptedRangeGet(t *testing.T) {
@@ -79,7 +77,7 @@ func TestEncryptedRangeGet(t *testing.T) {
 		defer remove(t)
 	}
 
-	object, data, password := "object-1", make([]byte, 5*1024*1024), "my-password"
+	object, data, password := "object-1", make([]byte, s3.Size), "my-password"
 	encryption := encrypt.DefaultPBKDF([]byte(password), []byte(bucket+object))
 	options := minio.PutObjectOptions{ServerSideEncryption: encryption}
 	if _, err := client.PutObject(bucket, object, bytes.NewReader(data), int64(len(data)), options); err != nil {
@@ -111,7 +109,7 @@ func TestEncryptedRangeGet(t *testing.T) {
 	}
 }
 
-func testEncryptedGet(bucket string, size int, t *testing.T) {
+func testEncryptedGet(bucket string, size int64, t *testing.T) {
 	if s3.NoTLS {
 		t.Skip("Skipping test because of -disableTLS flag")
 	}

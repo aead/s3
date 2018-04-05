@@ -40,7 +40,7 @@ func TestCustomerEncryptedCopy(t *testing.T) {
 	}
 
 	// 1. Test SSE-C unencrypted -> encrypted copy
-	srcObject, dstObject, data, password := "src-object-1", "dst-object-1", make([]byte, 5*1024*1024), "my-password"
+	srcObject, dstObject, data, password := "src-object-1", "dst-object-1", make([]byte, s3.Size), "my-password"
 	encryption := encrypt.DefaultPBKDF([]byte(password), []byte(bucket+dstObject))
 	src := minio.NewSourceInfo(bucket, srcObject, nil)
 	dst, err := minio.NewDestinationInfo(bucket, dstObject, encryption, nil)
@@ -133,7 +133,7 @@ func TestCustomerKeyRotation(t *testing.T) {
 		t.Log("warning: no tests to run")
 		return
 	}
-	object, data := "object-1", make([]byte, 5*1024*1024)
+	object, data := "object-1", make([]byte, s3.Size)
 	options := minio.PutObjectOptions{ServerSideEncryption: customerKeyRotationTests[0].Old}
 	if _, err := client.PutObject(bucket, object, bytes.NewReader(data), int64(len(data)), options); err != nil {
 		t.Fatalf("Failed to create object '%s/%s': %s", bucket, object, err)

@@ -10,10 +10,61 @@ import (
 	"errors"
 	"flag"
 	"os"
+	"strconv"
+	"strings"
 	"testing"
 
 	"github.com/minio/minio-go"
 )
+
+type sizeValue int64
+
+func newSizeValue(val int64, p *int64) *sizeValue {
+	*p = val
+	return (*sizeValue)(p)
+}
+
+func (sv *sizeValue) Set(s string) error {
+	const (
+		B  = 1
+		KB = 1024 * B
+		MB = 1024 * KB
+		GB = 1024 * MB
+	)
+	var (
+		v   int64
+		err error
+	)
+	switch upper := strings.ToUpper(s); {
+	default:
+		v, err = strconv.ParseInt(s, 10, 64)
+		v *= B
+	case strings.HasSuffix(upper, "GB"):
+		v, err = strconv.ParseInt(s[:len(s)-2], 10, 64)
+		v *= GB
+	case strings.HasSuffix(upper, "MB"):
+		v, err = strconv.ParseInt(s[:len(s)-2], 10, 64)
+		v *= MB
+	case strings.HasSuffix(upper, "KB"):
+		v, err = strconv.ParseInt(s[:len(s)-2], 10, 64)
+		v *= KB
+	case strings.HasSuffix(upper, "B"):
+		v, err = strconv.ParseInt(s[:len(s)-1], 10, 64)
+		v *= B
+	}
+	if err != nil {
+		return err
+	}
+	if v < 0 {
+		v *= -1
+	}
+	*sv = sizeValue(v)
+	return err
+}
+
+func (sv *sizeValue) Get() interface{} { return int64(*sv) }
+
+func (sv *sizeValue) String() string { return strconv.FormatInt(int64(*sv), 10) }
 
 func init() {
 	flag.StringVar(&Endpoint, "server", "localhost:9000", "The S3 server endpoint.")
@@ -22,6 +73,9 @@ func init() {
 
 	flag.BoolVar(&Insecure, "insecure", false, "Skip TLS certificate checks.")
 	flag.BoolVar(&NoTLS, "disableTLS", false, "Disable TLS. If set -insecure does nothing.")
+
+	flag.Var(newSizeValue(32*1024, &Size), "size", "The object size for single part operations. Default: 32KB")
+	flag.Var(newSizeValue(64*1024*1024, &MultipartSize), "sizeMultipart", "The object size for multipart part operations. Default: 65MB")
 }
 
 var (
@@ -40,6 +94,10 @@ var (
 	// NoTLS disables TLS. All client requests will be made of plain HTTP/TCP connections.
 	// Tests which require TLS will be skipped.
 	NoTLS bool
+	// Size is the size of objects for single-part operations in bytes. It is set by the '-size' CLI flag.
+	Size int64
+	// MultipartSize is the size of objects for multi-part operations in bytes. It is set by the '-sizeMultipart' CLI flag.
+	MultipartSize int64
 )
 
 var (
@@ -79,6 +137,12 @@ func Parse() error {
 				parseErr = errors.New("No secret key is provided and also no SECRET_KEY env. variable is exported")
 				return parseErr
 			}
+		}
+		if Size == 0 {
+			Size = 32 * 1024
+		}
+		if MultipartSize == 0 {
+			MultipartSize = 65 * 1024 * 1024
 		}
 	}
 	return parseErr
