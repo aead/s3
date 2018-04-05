@@ -46,6 +46,9 @@ func TestEncryptedMultipartPut(t *testing.T) {
 }
 
 func testEncryptedPut(bucket string, size int, t *testing.T) {
+	if s3.NoTLS {
+		t.Skip("Skipping test because of -disableTLS flag")
+	}
 	client, err := minio.New(s3.Endpoint, s3.AccessKey, s3.SecretKey, true)
 	if err != nil {
 		t.Fatalf("Failed to create client: %v", err)
@@ -92,6 +95,9 @@ func testEncryptedPut(bucket string, size int, t *testing.T) {
 func TestEncryptedObjectEtag(t *testing.T) {
 	if err := s3.Parse(); err != nil {
 		t.Fatal(err)
+	}
+	if s3.NoTLS {
+		t.Skip("Skipping test because of -disableTLS flag")
 	}
 
 	client, err := minio.New(s3.Endpoint, s3.AccessKey, s3.SecretKey, true)

@@ -21,6 +21,9 @@ func TestCustomerEncryptedCopy(t *testing.T) {
 	if err := s3.Parse(); err != nil {
 		t.Fatal(err)
 	}
+	if s3.NoTLS {
+		t.Skip("Skipping test because of -disableTLS flag")
+	}
 
 	client, err := minio.New(s3.Endpoint, s3.AccessKey, s3.SecretKey, true)
 	if err != nil {
@@ -107,6 +110,9 @@ func mustNewSSEC(key []byte) encrypt.ServerSide {
 func TestCustomerKeyRotation(t *testing.T) {
 	if err := s3.Parse(); err != nil {
 		t.Fatal(err)
+	}
+	if s3.NoTLS {
+		t.Skip("Skipping test because of -disableTLS flag")
 	}
 
 	client, err := minio.New(s3.Endpoint, s3.AccessKey, s3.SecretKey, true)

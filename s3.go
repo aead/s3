@@ -21,6 +21,7 @@ func init() {
 	flag.StringVar(&SecretKey, "secret", "", "The S3 secret key.")
 
 	flag.BoolVar(&Insecure, "insecure", false, "Skip TLS certificate checks.")
+	flag.BoolVar(&NoTLS, "disableTLS", false, "Disable TLS. If set -insecure does nothing.")
 }
 
 var (
@@ -36,6 +37,9 @@ var (
 	// Insecure allows TLS to endpoints without a valid signed TLS certificate.
 	// Particually useful for local servers. Can be set using the '-insecure' CLI flag.
 	Insecure bool
+	// NoTLS disables TLS. All client requests will be made of plain HTTP/TCP connections.
+	// Tests which require TLS will be skipped.
+	NoTLS bool
 )
 
 var (
