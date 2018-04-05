@@ -47,18 +47,47 @@ func TestEncryptedMultipartGet(t *testing.T) {
 var encryptedRangeGetTests = []struct {
 	Start, End int64
 }{
-	{Start: 0, End: s3.Size},     // 0
-	{Start: 0, End: -s3.Size},    // 1
-	{Start: s3.Size - 1, End: 0}, // 2
-	{Start: 0, End: 0},           // 3
-	{Start: 1, End: s3.Size},     // 4
-	{Start: 2, End: 0},           // 5
+	{Start: 0, End: s3.Size},           // 0
+	{Start: 0, End: -s3.Size},          // 1
+	{Start: s3.Size - 1, End: 0},       // 2
+	{Start: 0, End: 0},                 // 3
+	{Start: 1, End: s3.Size},           // 4
+	{Start: 0, End: s3.Size / 2},       // 5
+	{Start: s3.Size / 2, End: s3.Size}, // 6
 }
 
 func TestEncryptedRangeGet(t *testing.T) {
 	if err := s3.Parse(); err != nil {
 		t.Fatal(err)
 	}
+	bucket := s3.BucketName("test-encrypted-range-get")
+	testEncryptedRangeGet(bucket, s3.Size, encryptedRangeGetTests, t)
+}
+
+var encryptedMultipartRangeGetTests = []struct {
+	Start, End int64
+}{
+	{Start: 0, End: s3.MultipartSize},                    // 0
+	{Start: 0, End: -s3.MultipartSize},                   // 1
+	{Start: s3.MultipartSize - 1, End: 0},                // 2
+	{Start: 0, End: 0},                                   // 3
+	{Start: 1, End: s3.MultipartSize},                    // 4
+	{Start: 0, End: s3.MultipartSize / 2},                // 5
+	{Start: s3.MultipartSize / 2, End: s3.MultipartSize}, // 6
+}
+
+func TestEncryptedMultipartRangeGet(t *testing.T) {
+	if err := s3.Parse(); err != nil {
+		t.Fatal(err)
+	}
+	if testing.Short() {
+		t.Skip("Skipping test because of -short flag")
+	}
+	bucket := s3.BucketName("test-encrypted-multipart-range-get")
+	testEncryptedRangeGet(bucket, s3.MultipartSize, encryptedRangeGetTests, t)
+}
+
+func testEncryptedRangeGet(bucket string, size int64, tests []struct{ Start, End int64 }, t *testing.T) {
 	if s3.NoTLS {
 		t.Skip("Skipping test because of -disableTLS flag")
 	}
@@ -70,14 +99,13 @@ func TestEncryptedRangeGet(t *testing.T) {
 		TLSClientConfig: &tls.Config{InsecureSkipVerify: s3.Insecure},
 	})
 
-	bucket := s3.BucketName("test-encrypted-range-get")
 	if remove, err := s3.MakeBucket(bucket, client.BucketExists, client.MakeBucket, client.RemoveBucket); err != nil {
 		t.Fatalf("Failed to create bucket '%s': %s", bucket, err)
 	} else {
 		defer remove(t)
 	}
 
-	object, data, password := "object-1", make([]byte, s3.Size), "my-password"
+	object, data, password := "object-1", make([]byte, size), "my-password"
 	encryption := encrypt.DefaultPBKDF([]byte(password), []byte(bucket+object))
 	options := minio.PutObjectOptions{ServerSideEncryption: encryption}
 	if _, err := client.PutObject(bucket, object, bytes.NewReader(data), int64(len(data)), options); err != nil {
@@ -85,7 +113,7 @@ func TestEncryptedRangeGet(t *testing.T) {
 	}
 	defer s3.RemoveObject(bucket, object, client.RemoveObject, t)
 
-	for i, test := range encryptedRangeGetTests {
+	for i, test := range tests {
 		opts := minio.GetObjectOptions{ServerSideEncryption: encryption}
 		opts.SetRange(test.Start, test.End)
 		stream, err := client.GetObject(bucket, object, opts)
