@@ -26,7 +26,6 @@ var encryptedPutTests = []struct {
 }{
 	{Type: encrypt.S3},
 	{Type: encrypt.SSEC, Password: "my-password"},
-	{Type: encrypt.KMS, KeyID: "", Context: nil},
 }
 
 func TestEncryptedPut(t *testing.T) {
@@ -81,11 +80,11 @@ func testEncryptedPut(bucket string, size int, t *testing.T) {
 		options := minio.PutObjectOptions{ServerSideEncryption: encryption}
 		n, err := client.PutObject(bucket, object, bytes.NewReader(data), int64(len(data)), options)
 		if err != nil {
-			t.Fatalf("Failed to upload object '%s/%s': %s", bucket, object, err)
+			t.Fatalf("Test %d: Failed to upload object '%s/%s': %s", i, bucket, object, err)
 		}
 		defer s3.RemoveObject(bucket, object, client.RemoveObject, t)
 		if n != int64(len(data)) {
-			t.Errorf("Failed to complete object - object size: %d , uploaded: %d", len(data), n)
+			t.Errorf("Test %d: Failed to complete object - object size: %d , uploaded: %d", i, len(data), n)
 		}
 	}
 }

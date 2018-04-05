@@ -25,7 +25,6 @@ var encryptedGetTests = []struct {
 }{
 	{Type: encrypt.S3},
 	{Type: encrypt.SSEC, Password: "my-password"},
-	{Type: encrypt.KMS, KeyID: "", Context: nil},
 }
 
 func TestEncryptedGet(t *testing.T) {
@@ -90,7 +89,7 @@ func TestEncryptedRangeGet(t *testing.T) {
 		opts.SetRange(test.Start, test.End)
 		stream, err := client.GetObject(bucket, object, opts)
 		if err != nil {
-			t.Errorf("Failed to open connection to '%s/%s/%s: %s", s3.Endpoint, bucket, object, err)
+			t.Errorf("Test %d: Failed to open connection to '%s/%s/%s: %s", i, s3.Endpoint, bucket, object, err)
 			continue
 		}
 		content, err := ioutil.ReadAll(stream)
@@ -104,7 +103,7 @@ func TestEncryptedRangeGet(t *testing.T) {
 			test.Start *= -1
 		}
 		if !bytes.Equal(content, data[start:start+int64(len(content))]) {
-			t.Error("Download object data does not match upload object data")
+			t.Errorf("Test %d: Download object data does not match upload object data", i)
 		}
 	}
 }
@@ -144,25 +143,25 @@ func testEncryptedGet(bucket string, size int, t *testing.T) {
 		options := minio.PutObjectOptions{ServerSideEncryption: encryption}
 		n, err := client.PutObject(bucket, object, bytes.NewReader(data), int64(len(data)), options)
 		if err != nil {
-			t.Fatalf("Failed to upload object '%s/%s': %s", bucket, object, err)
+			t.Fatalf("Test %d: Failed to upload object '%s/%s': %s", i, bucket, object, err)
 		}
 		defer s3.RemoveObject(bucket, object, client.RemoveObject, t)
 		if n != int64(len(data)) {
-			t.Errorf("Failed to complete object - object size: %d , uploaded: %d", len(data), n)
+			t.Errorf("Test %d: Failed to complete object - object size: %d , uploaded: %d", i, len(data), n)
 		}
 
 		stream, err := client.GetObject(bucket, object, minio.GetObjectOptions{ServerSideEncryption: encryption})
 		if err != nil {
-			t.Errorf("Failed to open connection to '%s/%s/%s: %s", s3.Endpoint, bucket, object, err)
+			t.Errorf("Test %d: Failed to open connection to '%s/%s/%s: %s", i, s3.Endpoint, bucket, object, err)
 			continue
 		}
 		content, err := ioutil.ReadAll(stream)
 		if err != nil {
-			t.Errorf("Failed to get object %s/%s: %s", bucket, object, err)
+			t.Errorf("Test %d: Failed to get object %s/%s: %s", i, bucket, object, err)
 			continue
 		}
 		if !bytes.Equal(data, content) {
-			t.Error("Download object does not match upload object")
+			t.Errorf("Test %d: Download object does not match upload object", i)
 		}
 	}
 }
