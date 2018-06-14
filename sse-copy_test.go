@@ -90,13 +90,13 @@ var customerKeyRotationTests = []struct { // Tests are order-depended!
 	ShouldFail bool
 	ErrMessage string
 }{
-	{Old: encrypt.DefaultPBKDF([]byte("my-passowrd"), []byte("my-salt")), New: mustNewSSEC(make([]byte, 32)), ShouldFail: false, ErrMessage: ""},                                                                 // 0
-	{Old: mustNewSSEC(make([]byte, 32)), New: mustNewSSEC(make([]byte, 32)), ShouldFail: false, ErrMessage: ""},                                                                                                  // 1 Equal keys
-	{Old: mustNewSSEC(make([]byte, 32)), New: nil, ShouldFail: false, ErrMessage: ""},                                                                                                                            // 2 Server-Side decrypt
-	{Old: nil, New: mustNewSSEC([]byte("32-byte SSE-C secret encryption.")), ShouldFail: false, ErrMessage: ""},                                                                                                  // 3 Server-Side encrypt
-	{Old: nil, New: mustNewSSEC(make([]byte, 32)), ShouldFail: true, ErrMessage: "The object was stored using a form of Server Side Encryption. The correct parameters must be provided to retrieve the object"}, // 4 Wrong source key
-	{Old: nil, New: nil, ShouldFail: true, ErrMessage: "The object was stored using a form of Server Side Encryption. The correct parameters must be provided to retrieve the object"},                           // 5 Wrong source key- but src key == dst key == nil
-	//{Old: mustNewSSEC(make([]byte, 32)), New: mustNewSSEC(make([]byte, 32)), ShouldFail: true, ErrMessage: ""},                                                                                                 // 6 Wrong source key- but src key == dst key != nil See: https://github.com/minio/minio/issues/5625
+	{Old: encrypt.DefaultPBKDF([]byte("my-passowrd"), []byte("my-salt")), New: mustNewSSEC(make([]byte, 32)), ShouldFail: false, ErrMessage: ""},                                                                  // 0
+	{Old: mustNewSSEC(make([]byte, 32)), New: mustNewSSEC(make([]byte, 32)), ShouldFail: false, ErrMessage: ""},                                                                                                   // 1 Equal keys
+	{Old: mustNewSSEC(make([]byte, 32)), New: nil, ShouldFail: false, ErrMessage: ""},                                                                                                                             // 2 Server-Side decrypt
+	{Old: nil, New: mustNewSSEC([]byte("32-byte SSE-C secret encryption.")), ShouldFail: false, ErrMessage: ""},                                                                                                   // 3 Server-Side encrypt
+	{Old: nil, New: mustNewSSEC(make([]byte, 32)), ShouldFail: true, ErrMessage: "The object was stored using a form of Server Side Encryption. The correct parameters must be provided to retrieve the object."}, // 4 Wrong source key
+	{Old: nil, New: nil, ShouldFail: true, ErrMessage: "The object was stored using a form of Server Side Encryption. The correct parameters must be provided to retrieve the object."},                           // 5 Wrong source key- but src key == dst key == nil
+	{Old: mustNewSSEC(make([]byte, 32)), New: mustNewSSEC(make([]byte, 32)), ShouldFail: true, ErrMessage: "The provided encryption parameters did not match the ones used originally."},                          // 6 Wrong source key- but src key == dst key != nil See: https://github.com/minio/minio/issues/5625
 }
 
 func mustNewSSEC(key []byte) encrypt.ServerSide {
