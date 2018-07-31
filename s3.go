@@ -72,7 +72,7 @@ func init() {
 	flag.StringVar(&SecretKey, "secret", "", "The S3 secret key.")
 
 	flag.BoolVar(&Insecure, "insecure", false, "Skip TLS certificate checks.")
-	flag.BoolVar(&NoTLS, "disableTLS", false, "Disable TLS. If set -insecure does nothing.")
+	flag.BoolVar(&NoTLS, "noTLS", false, "Disable TLS. If set -insecure does nothing.")
 
 	flag.Var(newSizeValue(32*1024, &Size), "size", "The object size for single part operations. Default: 32KB")
 	flag.Var(newSizeValue(64*1024*1024, &MultipartSize), "sizeMultipart", "The object size for multipart part operations. Default: 65MB")
